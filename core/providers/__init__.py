@@ -67,22 +67,24 @@ def get_provider(name: str, settings: CoreSettings) -> Provider:
     if not model:
         raise ValueError(f"No model configured for provider {raw_name!r}")
 
+    thinking = settings.provider.thinking
+
     if raw_name in settings.providers:
-        # Named OpenAI-compatible gateway.
+        # Named OpenAI-compatible gateway: reasoning toggle honors openai shape.
         entry = settings.providers[raw_name]
-        return _build_openai_compat(raw_name, entry.base_url, entry.api_key, model)
+        return _build_openai_compat(raw_name, entry.base_url, entry.api_key, model, thinking=thinking)
 
     if raw_name == "anthropic":
-        return _build_anthropic(model)
+        return _build_anthropic(model, thinking=thinking)
     if raw_name == "openai":
-        return _build_openai(model)
+        return _build_openai(model, thinking=thinking)
     if raw_name == "gemini":
         return _build_gemini(model)
 
     raise KeyError(f"Unknown provider: {name!r}")
 
 
-def _build_anthropic(model: str) -> Provider:
+def _build_anthropic(model: str, *, thinking: str = "disabled") -> Provider:
     import os
 
     from anthropic import AsyncAnthropic
@@ -91,25 +93,27 @@ def _build_anthropic(model: str) -> Provider:
 
     api_key = os.environ.get("ANTHROPIC_API_KEY") or None
     client = AsyncAnthropic(api_key=api_key)
-    return AnthropicProvider(client, model)
+    return AnthropicProvider(client, model, thinking=thinking)
 
 
-def _build_openai(model: str) -> Provider:
+def _build_openai(model: str, *, thinking: str = "disabled") -> Provider:
     from openai import AsyncOpenAI
 
     from .openai import OpenAIProvider
 
     client = AsyncOpenAI()
-    return OpenAIProvider(client, model)
+    return OpenAIProvider(client, model, thinking=thinking)
 
 
-def _build_openai_compat(name: str, base_url: str, api_key: str, model: str) -> Provider:
+def _build_openai_compat(
+    name: str, base_url: str, api_key: str, model: str, *, thinking: str = "disabled"
+) -> Provider:
     from openai import AsyncOpenAI
 
     from .openai_compat import OpenAICompatProvider
 
     client = AsyncOpenAI(base_url=base_url, api_key=api_key or "ignored")
-    return OpenAICompatProvider(client, model, name)
+    return OpenAICompatProvider(client, model, name, thinking=thinking)
 
 
 def _build_gemini(model: str) -> Provider:

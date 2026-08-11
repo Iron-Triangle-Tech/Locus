@@ -120,10 +120,15 @@ def _parse_tool_calls(calls: list[Any] | None) -> list[ToolCall]:
 class OpenAIProvider:
     """OpenAI Chat Completions implementation of :class:`Provider`."""
 
-    def __init__(self, client: AsyncOpenAI, model: str) -> None:
+    def __init__(self, client: AsyncOpenAI, model: str, *, thinking: str = "disabled") -> None:
         self.client = client
         self.model = model
         self.name = "openai"
+        # "adaptive" -> forward reasoning_content deltas (if any on the deltas
+        # the model returns) as thinking chunks. We do NOT request a specific
+        # OpenAI "reasoning effort" param today; if/when one is accepted by
+        # the Chat Completions surface it can be wired here.
+        self._thinking = thinking
 
     async def complete(
         self,
@@ -182,6 +187,14 @@ class OpenAIProvider:
             delta = choice.delta
             if delta.content:
                 yield ProviderStreamChunk(token=delta.content)
+            # Forward reasoning content (OpenAI Responses-style reasoning) as
+            # thinking chunks when the adapter was built with thinking==
+            # "adaptive". Non-reasoning models never populate this field, so
+            # gating on the setting is enough; presence is model-driven.
+            if self._thinking == "adaptive":
+                reasoning = getattr(delta, "reasoning_content", None)
+                if reasoning:
+                    yield ProviderStreamChunk(thinking=reasoning)
             tcalls = getattr(delta, "tool_calls", None)
             if tcalls:
                 for tc in tcalls:

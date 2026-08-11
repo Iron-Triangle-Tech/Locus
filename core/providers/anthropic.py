@@ -113,10 +113,22 @@ def _parse_tool_calls(content: list[dict[str, Any]]) -> tuple[list[ToolCall], st
 class AnthropicProvider:
     """``anthropic`` Claude Messages-API implementation of :class:`Provider`."""
 
-    def __init__(self, client: AsyncAnthropic, model: str) -> None:
+    def __init__(self, client: AsyncAnthropic, model: str, *, thinking: str = "disabled") -> None:
         self.client = client
         self.model = model
         self.name = "anthropic"
+        # "adaptive" -> send thinking={"type":"adaptive"} (Opus/Sonnet 4.6+).
+        # We do NOT send budget_tokens (removed on 4.7, deprecated on 4.6).
+        self._thinking = thinking
+
+    def _thinking_kwarg(self) -> dict[str, Any]:
+        """Thinking request param. Only populated when the adapter was built with
+        thinking="adaptive". Adaptive is supported on Opus 4.6/4.7 + Sonnet
+        4.6; older models reject it and the SDK raise will surface as an
+        ErrorEvent. We send no budget_tokens (removed on 4.7, deprecated 4.6)."""
+        if self._thinking == "adaptive":
+            return {"thinking": {"type": "adaptive"}}
+        return {}
 
     async def complete(
         self,
@@ -135,6 +147,7 @@ class AnthropicProvider:
         }
         if tools:
             kwargs["tools"] = _tools_to_anthropic(tools)
+        kwargs.update(self._thinking_kwarg())
         resp = await self.client.messages.create(**kwargs)
         tool_calls, text = _parse_tool_calls(list(resp.content))
         return ProviderResponse(
@@ -169,6 +182,7 @@ class AnthropicProvider:
         }
         if tools:
             kwargs["tools"] = _tools_to_anthropic(tools)
+        kwargs.update(self._thinking_kwarg())
 
         # Accumulate tool_use input deltas; emit a ToolCall on input_json_delta
         # completion by buffering the JSON string and parsing at end.
@@ -190,6 +204,10 @@ class AnthropicProvider:
                         bindex = getattr(event, "index", 0)
                         slot = pending.setdefault(str(bindex), {"id": "", "name": "", "json": ""})
                         slot["json"] += getattr(delta, "partial_json", "")
+                    elif dtype == "thinking_delta":
+                        # Extended-thinking reasoning chunk. Ephemeral: emitted
+                        # as ThinkingEvent on the bus, not persisted by the loop.
+                        yield ProviderStreamChunk(thinking=getattr(delta, "thinking", ""))
                 elif etype == "content_block_start":
                     block = getattr(event, "content_block", None)
                     if block is not None and getattr(block, "type", "") == "tool_use":

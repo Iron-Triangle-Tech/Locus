@@ -57,6 +57,7 @@ from core.tools.registry import ToolRegistry
 from shared.protocol import (
     ErrorEvent,
     FinalEvent,
+    ThinkingEvent,
     TokenEvent,
     ToolCallEvent,
     ToolResultEvent,
@@ -263,6 +264,11 @@ class AgentLoop:
             if chunk.token:
                 text_parts.append(chunk.token)
                 self._emit(TokenEvent(thread_id=thread_id, delta=chunk.token))
+            if chunk.thinking:
+                # Ephemeral reasoning delta: stream to the endpoint for display
+                # but do NOT append to text_parts (not persisted, not part of
+                # the assistant message returned to the provider on replay).
+                self._emit(ThinkingEvent(thread_id=thread_id, delta=chunk.thinking))
             if chunk.tool_call:
                 # Use the call's own id as the dedup key when present, else
                 # fall back to call index (some adapters stream partial args

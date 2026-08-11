@@ -28,6 +28,9 @@ dependencies = [
     "pydantic-settings>=2.3",
     # browser
     "playwright>=1.45",
+    # endpoint TUI
+    "textual>=0.86",
+    "rich>=13.7",
 ]
 
 [project.optional-dependencies]

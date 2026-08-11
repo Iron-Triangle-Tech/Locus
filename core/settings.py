@@ -50,6 +50,11 @@ class ProviderSettings(BaseModel):
             "gemini": "gemini-1.5-flash",
         }
     )
+    # Stream provider reasoning (Anthropic extended thinking / OpenAI reasoning
+    # content) to the endpoint as ThinkingEvent frames. "adaptive" enables it
+    # (model decides when/how much to think); "disabled" (default) sends no
+    # thinking param. Overridable via LOCUS_CORE_PROVIDER__THINKING.
+    thinking: Literal["adaptive", "disabled"] = "disabled"
 
 
 class NamedProviderSettings(BaseModel):

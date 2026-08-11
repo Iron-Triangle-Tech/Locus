@@ -1,12 +1,15 @@
 """``locus-endpoint`` console entry point.
 
-Connect to a core server and drop into the stdin/stdout REPL. A handful of
-overrides come from the command line; everything else comes from
-``endpoint/config.toml`` + ``LOCUS_ENDPOINT_*`` env (see :mod:`endpoint.settings`).
+Connect to a core server and run the endpoint UI. ``--ui`` selects the TUI
+(the default; a Textual app over :mod:`endpoint.ui.app`) or the legacy
+stdin/stdout REPL (:mod:`endpoint.ui.repl`). The rest of the overrides come
+from the command line; everything else comes from ``endpoint/config.toml`` +
+``LOCUS_ENDPOINT_*`` env (see :mod:`endpoint.settings`).
 
 Usage::
 
     locus-endpoint --core ws://localhost:7100/link --token my-secret
+    locus-endpoint --core ws://localhost:7100/link --ui repl
 
 If ``--token`` is omitted, the shared bearer token must come from the
 ``LOCUS_ENDPOINT_LINK_TOKEN`` env var (secrets are intentionally not committed
@@ -28,7 +31,7 @@ from endpoint.settings import EndpointSettings, get_settings
 def _build_arg_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="locus-endpoint",
-        description="Connect to a Locus core server and enter the REPL.",
+        description="Connect to a Locus core server and run the endpoint UI.",
     )
     p.add_argument(
         "--core",
@@ -50,7 +53,20 @@ def _build_arg_parser() -> argparse.ArgumentParser:
         "--no-stream",
         dest="stream_tokens",
         action="store_false",
-        help="Buffer to final instead of streaming tokens inline",
+        help="Buffer to final instead of streaming tokens inline (REPL only)",
+    )
+    p.add_argument(
+        "--provider",
+        dest="provider",
+        default="auto",
+        help="Provider name to route turns to (default: auto; TUI only)",
+    )
+    p.add_argument(
+        "--ui",
+        dest="ui",
+        choices=("tui", "repl"),
+        default="tui",
+        help="Which UI to run: the Textual TUI (default) or the legacy line REPL",
     )
     return p
 
@@ -85,7 +101,7 @@ def _apply_overrides(settings: EndpointSettings, args: argparse.Namespace) -> En
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    """Entry point: parse args, build settings, run the REPL."""
+    """Entry point: parse args, build settings, run the chosen UI."""
     args = _build_arg_parser().parse_args(argv)
 
     logging.basicConfig(
@@ -96,10 +112,20 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     import asyncio
 
-    from endpoint.ui.repl import run_repl
-
     settings = _apply_overrides(get_settings(), args)
-    return asyncio.run(run_repl(settings, endpoint_id=args.endpoint_id))
+    if args.ui == "repl":
+        from endpoint.ui.repl import run_repl
+
+        return asyncio.run(run_repl(settings, endpoint_id=args.endpoint_id))
+    from endpoint.ui.app import run_tui
+
+    return asyncio.run(
+        run_tui(
+            settings,
+            endpoint_id=args.endpoint_id,
+            provider=getattr(args, "provider", "auto"),
+        )
+    )
 
 
 if __name__ == "__main__":  # pragma: no cover

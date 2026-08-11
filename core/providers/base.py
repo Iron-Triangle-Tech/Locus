@@ -85,13 +85,15 @@ class ProviderResponse(BaseModel):
 class ProviderStreamChunk(BaseModel):
     """One chunk emitted while streaming a provider call.
 
-    Exactly one of ``token`` / ``tool_call`` is set per chunk (or neither, for
-    a final marker). ``done`` True means the stream has ended.
+    Exactly one of ``token`` / ``thinking`` / ``tool_call`` is set per chunk (or
+    neither, for a final marker). ``thinking`` carries provider reasoning
+    (Anthropic extended thinking, OpenAI reasoning_content) for display only.
     """
 
     model_config = ConfigDict(extra="forbid")
 
     token: str | None = None
+    thinking: str | None = None
     tool_call: ToolCall | None = None
     finish_reason: Literal["stop", "tool_calls", "length", "error"] | None = None
 

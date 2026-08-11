@@ -286,3 +286,47 @@ class TestMaxIters:
         errs = [f for f in frames if f.type == "error"]
         assert errs and "max_iters" in errs[-1].message
         assert provider.calls == 2
+
+
+class TestThinkingStream:
+    async def test_thinking_chunk_emits_event_and_is_not_persisted(self, env) -> None:
+        store, reg, bus, settings = env
+        thread = await store.create_thread(provider="fake", model="fake-1")
+        # A turn with a thinking delta before the assistant text. Thinking is
+        # ephemeral: emitted on the bus but NOT folded into the persisted text.
+        provider = FakeProvider(
+            "fake-1",
+            scripts=[
+                [
+                    ProviderStreamChunk(thinking="let me consider... "),
+                    ProviderStreamChunk(thinking="step 2"),
+                    ProviderStreamChunk(token="hel"),
+                    ProviderStreamChunk(token="lo"),
+                    ProviderStreamChunk(finish_reason="stop"),
+                ]
+            ],
+        )
+        loop = AgentLoop(
+            settings=settings, store=store, registry=reg, bus=bus, config=LoopConfig(max_iters=4)
+        )
+        import core.agent.loop as loop_mod
+
+        orig = loop_mod.get_provider
+        loop_mod.get_provider = lambda name, settings: provider
+        try:
+            frames = await _run_and_collect(loop, thread.id, "hi")
+        finally:
+            loop_mod.get_provider = orig
+
+        thinking = [f for f in frames if f.type == "thinking"]
+        assert len(thinking) == 2
+        assert thinking[0].delta == "let me consider... "
+        assert thinking[1].delta == "step 2"
+        # Final still assembled from text tokens only.
+        final = next(f for f in frames if f.type == "final")
+        assert final.text == "hello"
+        # Persisted assistant turn does NOT carry the thinking text.
+        turns, results = await store.load_history(thread.id)
+        assert any(t.text == "hello" for t in turns)
+        assert all("let me consider" not in (t.text or "") for t in turns)
+        assert results == []

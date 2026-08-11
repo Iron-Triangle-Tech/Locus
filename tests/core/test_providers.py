@@ -225,6 +225,49 @@ class TestAnthropicAdapter:
         reasons = [c.finish_reason for c in chunks if c.finish_reason]
         assert reasons == ["tool_calls"]
 
+    async def test_stream_forwards_thinking_delta_as_thinking_chunk(self) -> None:
+        events = [
+            Obj(type="content_block_start", index=0, content_block=Obj(type="thinking")),
+            Obj(
+                type="content_block_delta",
+                index=0,
+                delta=Obj(type="thinking_delta", thinking="reasoning... "),
+            ),
+            Obj(type="content_block_delta", index=0, delta=Obj(type="thinking_delta", thinking="step")),
+            Obj(type="content_block_stop", index=0),
+            Obj(type="content_block_start", index=1, content_block=Obj(type="text")),
+            Obj(type="content_block_delta", index=1, delta=Obj(type="text_delta", text="Hi")),
+            Obj(type="content_block_stop", index=1),
+        ]
+        client = FakeAnthropic(Obj(), stream_events=events, final_stop_reason="end_turn")
+        prov = _Anth(client, "claude-x")  # thinking default "disabled"
+        chunks = [c async for c in prov.stream([], UserTurn(content="go"), [], [])]
+        thinking = "".join(c.thinking for c in chunks if c.thinking)
+        assert thinking == "reasoning... step"
+        tokens = "".join(c.token for c in chunks if c.token)
+        assert tokens == "Hi"
+
+    async def test_thinking_adaptive_flows_into_sdk_kwargs(self) -> None:
+        events = [
+            Obj(type="content_block_delta", index=0, delta=Obj(type="text_delta", text="x")),
+            Obj(type="content_block_stop", index=0),
+        ]
+        client = FakeAnthropic(Obj(), stream_events=events, final_stop_reason="end_turn")
+        prov = _Anth(client, "claude-x", thinking="adaptive")
+        _ = [c async for c in prov.stream([], UserTurn(content="go"), [], [])]
+        # The adapter sent the adaptive thinking request param to the SDK.
+        assert client.last_kwargs.get("thinking") == {"type": "adaptive"}
+
+    async def test_thinking_disabled_does_not_send_param(self) -> None:
+        events = [
+            Obj(type="content_block_delta", index=0, delta=Obj(type="text_delta", text="x")),
+            Obj(type="content_block_stop", index=0),
+        ]
+        client = FakeAnthropic(Obj(), stream_events=events, final_stop_reason="end_turn")
+        prov = _Anth(client, "claude-x")  # default disabled
+        _ = [c async for c in prov.stream([], UserTurn(content="go"), [], [])]
+        assert "thinking" not in client.last_kwargs
+
 
 # --------------------------------------------------------------------------- #
 # OpenAI
@@ -361,6 +404,63 @@ class TestOpenAIAdapter:
         assert tcs == [ToolCall(id="c1", name="get_weather", arguments={"city": "SF"})]
         reasons = [c.finish_reason for c in out if c.finish_reason]
         assert reasons == ["tool_calls"]
+
+    async def test_stream_forwards_reasoning_content_as_thinking_chunk(self) -> None:
+        chunks = [
+            Obj(
+                choices=[
+                    Obj(
+                        finish_reason=None,
+                        delta=Obj(content=None, tool_calls=None, reasoning_content="because... "),
+                    )
+                ]
+            ),
+            Obj(
+                choices=[
+                    Obj(
+                        finish_reason=None, delta=Obj(content=None, tool_calls=None, reasoning_content="why")
+                    )
+                ]
+            ),
+            Obj(
+                choices=[
+                    Obj(
+                        finish_reason="stop", delta=Obj(content="Hi", tool_calls=None, reasoning_content=None)
+                    )
+                ]
+            ),
+        ]
+        client = FakeOpenAI(None, stream_chunks=chunks)
+        prov = OpenAIProvider(client, "gpt-x", thinking="adaptive")
+        out = [c async for c in prov.stream([], UserTurn(content="x"), [_tool_def()], [])]
+        thinking = "".join(c.thinking for c in out if c.thinking)
+        assert thinking == "because... why"
+        tokens = "".join(c.token for c in out if c.token)
+        assert tokens == "Hi"
+        assert [c.finish_reason for c in out if c.finish_reason] == ["stop"]
+
+    async def test_stream_disabled_drops_reasoning_content(self) -> None:
+        chunks = [
+            Obj(
+                choices=[
+                    Obj(
+                        finish_reason=None,
+                        delta=Obj(content=None, tool_calls=None, reasoning_content="secret"),
+                    )
+                ]
+            ),
+            Obj(
+                choices=[
+                    Obj(finish_reason="stop", delta=Obj(content="Hi", tool_calls=None, reasoning_content=None))
+                ]
+            ),
+        ]
+        client = FakeOpenAI(None, stream_chunks=chunks)
+        prov = OpenAIProvider(client, "gpt-x")  # thinking default disabled
+        out = [c async for c in prov.stream([], UserTurn(content="x"), [_tool_def()], [])]
+        # Disabled: reasoning_content is NOT forwarded as a thinking chunk.
+        assert not any(c.thinking for c in out)
+        assert "".join(c.token for c in out if c.token) == "Hi"
 
 
 # --------------------------------------------------------------------------- #
@@ -569,8 +669,12 @@ class TestRegistry:
 
         s = self._settings(provider="anthropic")  # model resolved from defaults
         calls: list[str] = []
-        monkeypatch.setattr(reg, "_build_anthropic", lambda m: (calls.append(m), _Sentinel())[1])
-        monkeypatch.setattr(reg, "_build_openai", lambda m: (calls.append(m), _Sentinel("oai"))[1])
+        monkeypatch.setattr(
+            reg, "_build_anthropic", lambda m, **_kw: (calls.append(m), _Sentinel())[1]
+        )
+        monkeypatch.setattr(
+            reg, "_build_openai", lambda m, **_kw: (calls.append(m), _Sentinel("oai"))[1]
+        )
         monkeypatch.setattr(reg, "_build_gemini", lambda m: (calls.append(m), _Sentinel("gem"))[1])
         # auto -> default anthropic
         p = get_provider("auto", s)
@@ -597,7 +701,7 @@ class TestRegistry:
         monkeypatch.setattr(
             reg,
             "_build_openai_compat",
-            lambda name, base_url, api_key, model: (
+            lambda name, base_url, api_key, model, **_kw: (
                 seen.update(name=name, base_url=base_url, api_key=api_key, model=model)
                 or _Sentinel("compat")
             ),

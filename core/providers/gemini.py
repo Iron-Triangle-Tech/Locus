@@ -7,6 +7,12 @@ objects, maps neutral tool results into ``functionResponse`` parts, and parses
 The google-genai SDK exposes an async client at ``google.genai.Client`` with an
 ``aio`` property for async methods; we use ``client.aio.models.generate_content``
 + ``generate_content_stream``.
+
+**Thinking/reasoning:** Gemini has no first-class reasoning stream surfaced by
+this SDK shape; this adapter never emits ``ProviderStreamChunk(thinking=...)``.
+The ThinkingEvent wire frame is still produced by Anthropic/OpenAI when their
+adapters are built with thinking="adaptive"; Gemini renders nothing in its
+place. If a future SDK exposes Gemini reasoning, wire it here.
 """
 
 from __future__ import annotations

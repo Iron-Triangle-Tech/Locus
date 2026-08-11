@@ -121,6 +121,21 @@ class TokenEvent(BaseModel):
     delta: str
 
 
+class ThinkingEvent(BaseModel):
+    """A streamed reasoning/thinking chunk (provider "extended thinking").
+
+    Ephemeral display only: not persisted to the memory store. The endpoint
+    renders these in a muted bordered block so the user sees the model's
+    reasoning without it polluting the assistant transcript.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    type: Literal["thinking"] = "thinking"
+    thread_id: str
+    delta: str
+
+
 class ToolCallEvent(BaseModel):
     """The agent is invoking a tool.
 
@@ -182,13 +197,15 @@ EndpointFrame = Annotated[
     Field(discriminator="type"),
 ]
 CoreFrame = Annotated[
-    TokenEvent | ToolCallEvent | ToolResultEvent | FinalEvent | ErrorEvent,
+    TokenEvent | ThinkingEvent | ToolCallEvent | ToolResultEvent | FinalEvent | ErrorEvent,
     Field(discriminator="type"),
 ]
 
 # Direction sets, useful for cheap server-side dispatch before full parsing.
 ENDPOINT_TAGS: frozenset[str] = frozenset({"connect", "user_message", "tool_result", "disconnect"})
-CORE_TAGS: frozenset[str] = frozenset({"token", "tool_call", "tool_result_event", "final", "error"})
+CORE_TAGS: frozenset[str] = frozenset(
+    {"token", "thinking", "tool_call", "tool_result_event", "final", "error"}
+)
 
 _endpoint_adapter: TypeAdapter[EndpointFrame] = TypeAdapter(EndpointFrame)
 _core_adapter: TypeAdapter[CoreFrame] = TypeAdapter(CoreFrame)
@@ -204,7 +221,9 @@ def load_endpoint(text: str) -> Connect | UserMessage | ToolResult | Disconnect:
     return _endpoint_adapter.validate_json(text)  # type: ignore[return-value]
 
 
-def load_core(text: str) -> TokenEvent | ToolCallEvent | ToolResultEvent | FinalEvent | ErrorEvent:
+def load_core(
+    text: str,
+) -> TokenEvent | ThinkingEvent | ToolCallEvent | ToolResultEvent | FinalEvent | ErrorEvent:
     """Parse a frame known to be core->endpoint."""
     return _core_adapter.validate_json(text)  # type: ignore[return-value]
 
@@ -220,6 +239,7 @@ __all__ = [
     "FinalEvent",
     "ProviderName",
     "Role",
+    "ThinkingEvent",
     "TokenEvent",
     "ToolCallEvent",
     "ToolResult",

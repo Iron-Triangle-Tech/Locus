@@ -26,6 +26,12 @@ default = "anthropic"
 # Model id per built-in provider. Override via env
 # LOCUS_CORE_PROVIDER_MODELS__ANTHROPIC etc. (see settings.py for env mapping).
 models = { anthropic = "claude-3-5-sonnet-20241022", openai = "gpt-4o", gemini = "gemini-1.5-flash" }
+# Stream provider reasoning (Anthropic extended thinking / OpenAI reasoning
+# content) to the endpoint as ThinkingEvent frames for display in a muted
+# bordered block. "adaptive" enables it (the model decides when/how much);
+# "disabled" sends no thinking param. Override via env
+# LOCUS_CORE_PROVIDER__THINKING.
+thinking = "disabled"
 
 # ---------------------------------------------------------------------------
 # Named, configured providers.
