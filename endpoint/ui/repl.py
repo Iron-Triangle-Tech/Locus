@@ -28,7 +28,7 @@ import logging
 import sys
 from typing import TYPE_CHECKING, Any
 
-from shared.protocol import (
+from protocol import (
     ErrorEvent,
     FinalEvent,
     TokenEvent,

@@ -11,7 +11,7 @@ from rich.panel import Panel
 from rich.text import Text
 
 from endpoint.ui.tui import render_frame, render_thinking, render_tool_call
-from shared.protocol import (
+from protocol import (
     ErrorEvent,
     FinalEvent,
     ThinkingEvent,

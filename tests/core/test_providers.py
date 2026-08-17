@@ -21,16 +21,16 @@ from typing import Any
 
 import pytest
 
-from core.providers.anthropic import AnthropicProvider as _Anth
-from core.providers.base import (
+from providers.anthropic import AnthropicProvider as _Anth
+from providers.base import (
     AssistantTurn,
     ToolCall,
     ToolDef,
     ToolResultMessage,
     UserTurn,
 )
-from core.providers.gemini import GeminiProvider
-from core.providers.openai import OpenAIProvider
+from providers.gemini import GeminiProvider
+from providers.openai import OpenAIProvider
 
 # --------------------------------------------------------------------------- #
 # Tiny attribute-object helpers (so we can build SDK response shapes inline)
@@ -585,7 +585,7 @@ class TestGeminiAdapter:
 
 class TestOpenAICompatAdapter:
     async def test_name_override_and_logic_reused(self) -> None:
-        from core.providers.openai_compat import OpenAICompatProvider
+        from providers.openai_compat import OpenAICompatProvider
 
         resp = Obj(choices=[Obj(finish_reason="stop", message=Obj(content="hi"))])
         client = FakeOpenAI(resp)
@@ -616,7 +616,7 @@ class TestRegistry:
     """
 
     def _settings(self, **over: Any) -> Any:
-        from core.settings import CoreSettings, ProviderSettings
+        from settings import CoreSettings, ProviderSettings
 
         prov = over.pop("provider", None)
         providers = over.pop("providers", None)
@@ -631,7 +631,7 @@ class TestRegistry:
         return CoreSettings(**kw)
 
     def test_resolve_auto_uses_default(self) -> None:
-        from core.providers import resolve_provider_name
+        from providers import resolve_provider_name
 
         s = self._settings(provider="openai")
         assert resolve_provider_name("auto", s) == "openai"
@@ -639,15 +639,15 @@ class TestRegistry:
         assert resolve_provider_name("auto", s2) == "anthropic"
 
     def test_resolve_known_builtin_passes_through(self) -> None:
-        from core.providers import resolve_provider_name
+        from providers import resolve_provider_name
 
         s = self._settings()
         for name in ("anthropic", "openai", "gemini"):
             assert resolve_provider_name(name, s) == name
 
     def test_resolve_known_named_provider_passes(self) -> None:
-        from core.providers import resolve_provider_name
-        from core.settings import NamedProviderSettings
+        from providers import resolve_provider_name
+        from settings import NamedProviderSettings
 
         s = self._settings(
             providers={
@@ -657,15 +657,15 @@ class TestRegistry:
         assert resolve_provider_name("local", s) == "local"
 
     def test_resolve_unknown_raises_keyerror(self) -> None:
-        from core.providers import resolve_provider_name
+        from providers import resolve_provider_name
 
         s = self._settings()
         with pytest.raises(KeyError):
             resolve_provider_name("nope", s)
 
     def test_get_provider_dispatches_builtins(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        import core.providers as reg
-        from core.providers import get_provider
+        import providers as reg
+        from providers import get_provider
 
         s = self._settings(provider="anthropic")  # model resolved from defaults
         calls: list[str] = []
@@ -688,9 +688,9 @@ class TestRegistry:
         assert calls == ["gemini-1.5-flash"]
 
     def test_get_provider_dispatches_named_compat(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        import core.providers as reg
-        from core.providers import get_provider
-        from core.settings import NamedProviderSettings
+        import providers as reg
+        from providers import get_provider
+        from settings import NamedProviderSettings
 
         s = self._settings(
             providers={
@@ -716,15 +716,15 @@ class TestRegistry:
         }
 
     def test_get_provider_unknown_raises(self) -> None:
-        from core.providers import get_provider
+        from providers import get_provider
 
         s = self._settings()
         with pytest.raises(KeyError):
             get_provider("nope", s)
 
     def test_get_provider_no_model_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        from core.providers import get_provider
-        from core.settings import ProviderSettings
+        from providers import get_provider
+        from settings import ProviderSettings
 
         # anthropic with an empty models map -> ValueError (no configured model)
         s = self._settings(provider=ProviderSettings(models={}))

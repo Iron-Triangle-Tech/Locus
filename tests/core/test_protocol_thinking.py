@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from shared.protocol import (
+from protocol import (
     CORE_TAGS,
     ThinkingEvent,
     load_core,

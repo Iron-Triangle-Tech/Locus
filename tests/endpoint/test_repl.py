@@ -18,7 +18,7 @@ import pytest
 from endpoint.endpoint_conn.client import EndpointClient
 from endpoint.settings import CoreSettings, EndpointSettings, UISettings
 from endpoint.ui import repl as repl_mod
-from shared.protocol import dump, load_endpoint
+from protocol import dump, load_endpoint
 
 # --------------------------------------------------------------------------- #
 # Fake core WS server (a compact copy of the one in test_client.py; kept local
@@ -105,7 +105,7 @@ class TestREPL:
         self, tmp_path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """A turn renders streamed tokens inline and ends with a newline."""
-        from shared.protocol import FinalEvent, TokenEvent
+        from protocol import FinalEvent, TokenEvent
 
         async def handler(conn: Any) -> None:
             await conn.recv()  # Connect
@@ -139,7 +139,7 @@ class TestREPL:
     async def test_tool_call_and_result_rendered(
         self, tmp_path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        from shared.protocol import FinalEvent, ToolCallEvent, ToolResultEvent
+        from protocol import FinalEvent, ToolCallEvent, ToolResultEvent
 
         async def handler(conn: Any) -> None:
             await conn.recv()  # Connect
@@ -185,7 +185,7 @@ class TestREPL:
     async def test_no_stream_prints_final_text_once(
         self, tmp_path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        from shared.protocol import FinalEvent, TokenEvent
+        from protocol import FinalEvent, TokenEvent
 
         async def handler(conn: Any) -> None:
             await conn.recv()
@@ -216,7 +216,7 @@ class TestREPL:
         self, tmp_path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """The second turn reuses the thread_id pinned from the first turn."""
-        from shared.protocol import FinalEvent
+        from protocol import FinalEvent
 
         seen_thread_ids: list[str | None] = []
 
@@ -248,7 +248,7 @@ class TestREPL:
     async def test_error_event_renders_to_stderr(
         self, tmp_path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        from shared.protocol import ErrorEvent, FinalEvent
+        from protocol import ErrorEvent, FinalEvent
 
         async def handler(conn: Any) -> None:
             await conn.recv()
@@ -276,7 +276,7 @@ class TestREPL:
         assert "ok" in out.getvalue()
 
     async def test_eof_exits_cleanly(self, tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
-        from shared.protocol import FinalEvent
+        from protocol import FinalEvent
 
         async def handler(conn: Any) -> None:
             await conn.recv()
@@ -303,7 +303,7 @@ class TestREPL:
         assert "Bye." in out.getvalue()
 
     async def test_blank_lines_are_ignored(self, tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
-        from shared.protocol import FinalEvent
+        from protocol import FinalEvent
 
         sent: list[str] = []
 

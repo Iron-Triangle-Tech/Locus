@@ -39,24 +39,24 @@ from typing import TYPE_CHECKING
 from fastapi import FastAPI, HTTPException, WebSocket, status
 from pydantic import BaseModel
 
-from core.agent.loop import AgentLoop, LoopConfig
-from core.bus import EventBus
-from core.endpoint_conn.server import (
+from agent.loop import AgentLoop, LoopConfig
+from bus import EventBus
+from endpoint_conn.server import (
     LinkRegistry,
     WSLinkAdhocDispatcher,
     handle_link,
 )
-from core.providers import resolve_provider_name
-from core.settings import CoreSettings, get_settings
-from core.storage.database_io import Base, MemoryStore
-from core.storage.session import create_engine, init_db, make_session_factory
-from core.tools.file import default_file_tools
-from core.tools.http import HttpFetch
-from core.tools.loader import load_tool_defs, seed_missing
-from core.tools.registry import ToolRegistry
+from providers import resolve_provider_name
+from settings import CoreSettings, get_settings
+from storage.database_io import Base, MemoryStore
+from storage.session import create_engine, init_db, make_session_factory
+from tools.file import default_file_tools
+from tools.http import HttpFetch
+from tools.loader import load_tool_defs, seed_missing
+from tools.registry import ToolRegistry
 
 if TYPE_CHECKING:
-    from shared.protocol import UserMessage
+    from protocol import UserMessage
 
 __all__ = ["AppState", "app_factory", "create_app", "main"]
 
@@ -225,7 +225,7 @@ def _wire_routes(app: FastAPI, state: AppState) -> None:
         # socket has not been accepted yet; here we accept-then-close only as
         # a fallback.
         headers = {k: v for k, v in websocket.headers.items()}
-        from shared.auth import check_token
+        from auth import check_token
 
         expected = state.settings.link_token
         if not expected or not check_token(headers, expected):
@@ -297,7 +297,7 @@ def _make_on_user_message(state: AppState):  # type: ignore[no-untyped-def]
 
 
 def _error_event(thread_id: str | None, message: str):  # type: ignore[no-untyped-def]
-    from shared.protocol import ErrorEvent
+    from protocol import ErrorEvent
 
     return ErrorEvent(thread_id=thread_id, message=message, fatal=True)
 

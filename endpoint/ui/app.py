@@ -47,7 +47,7 @@ from textual.reactive import reactive
 from textual.widgets import Footer, Header, Input, RichLog, Static
 
 from endpoint.ui.tui import parse_slash, render_frame
-from shared.protocol import (
+from protocol import (
     ErrorEvent,
     FinalEvent,
     ThinkingEvent,

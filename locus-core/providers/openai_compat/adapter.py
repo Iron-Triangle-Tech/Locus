@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .openai import OpenAIProvider
+from ..openai import OpenAIProvider
 
 if TYPE_CHECKING:
     from openai import AsyncOpenAI

@@ -27,17 +27,17 @@ from typing import Any
 import httpx
 import pytest
 
-from core.app import AppState, _make_on_user_message, app_factory  # type: ignore[attr-defined]
-from core.endpoint_conn.server import WSLinkAdhocDispatcher, handle_link
-from core.providers.base import ToolCall, ToolResultMessage
-from core.settings import CoreSettings, StorageSettings, ToolsSettings
-from shared.auth import bearer_header
-from shared.protocol import (
+from app import AppState, _make_on_user_message, app_factory  # type: ignore[attr-defined]
+from auth import bearer_header
+from endpoint_conn.server import WSLinkAdhocDispatcher, handle_link
+from protocol import (
     Connect,
     FinalEvent,
     ToolResult,
     UserMessage,
 )
+from providers.base import ToolCall, ToolResultMessage
+from settings import CoreSettings, StorageSettings, ToolsSettings
 
 # --------------------------------------------------------------------------- #
 # Settings / fixtures
@@ -548,7 +548,7 @@ class TestOnUserMessage:
         ) -> None:
             created.append(thread_id)
 
-        import core.app as app_mod
+        import app as app_mod
 
         orig_run = app_mod.AgentLoop.run_agent_turn
         app_mod.AgentLoop.run_agent_turn = _noop_run  # type: ignore[assignment]

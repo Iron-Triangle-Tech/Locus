@@ -20,7 +20,7 @@ import pytest
 
 from endpoint.endpoint_conn.client import AuthError, EndpointClient
 from endpoint.settings import CoreSettings, EndpointSettings, UISettings
-from shared.protocol import load_endpoint
+from protocol import load_endpoint
 
 # --------------------------------------------------------------------------- #
 # Fake core WS server
@@ -156,7 +156,7 @@ class TestEndpointClient:
 
     async def test_events_yields_parsed_frames(self) -> None:
         """events() parses core->endpoint frames into pydantic models."""
-        from shared.protocol import FinalEvent, TokenEvent, dump
+        from protocol import FinalEvent, TokenEvent, dump
 
         async def handler(conn: Any) -> None:
             await conn.recv()  # Connect
@@ -184,7 +184,7 @@ class TestEndpointClient:
     async def test_adhoc_tool_invokes_local_runnable_and_replies_toolresult(self) -> None:
         """A ToolCallEvent for an advertised ad-hoc tool runs locally and the
         client replies with a matching ToolResult frame core can parse."""
-        from shared.protocol import ToolCallEvent, dump, load_endpoint
+        from protocol import ToolCallEvent, dump, load_endpoint
 
         # Ad-hoc tool: returns the echoed query string.
         async def echo(args: dict[str, Any]) -> str:
@@ -244,7 +244,7 @@ class TestEndpointClient:
     async def test_unknown_adhoc_tool_replies_error(self) -> None:
         """If core asks for a tool we never registered, we still reply (error)
         so core's dispatcher future doesn't time out."""
-        from shared.protocol import ToolCallEvent, dump, load_endpoint
+        from protocol import ToolCallEvent, dump, load_endpoint
 
         result_seen: list[Any] = []
 
@@ -281,7 +281,7 @@ class TestEndpointClient:
     async def test_local_tool_call_is_not_executed_endpoint_side(self) -> None:
         """ToolCallEvent with local=True is just rendered (iterated), not
         dispatched to an ad-hoc runnable -- core ran it itself."""
-        from shared.protocol import ToolCallEvent, dump
+        from protocol import ToolCallEvent, dump
 
         executed: list[dict[str, Any]] = []
 

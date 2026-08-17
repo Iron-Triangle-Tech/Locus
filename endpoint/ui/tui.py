@@ -24,7 +24,7 @@ from typing import Literal
 from rich.panel import Panel
 from rich.text import Text
 
-from shared.protocol import (
+from protocol import (
     ErrorEvent,
     FinalEvent,
     ThinkingEvent,

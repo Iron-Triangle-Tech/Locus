@@ -12,7 +12,7 @@ from typing import Protocol, runtime_checkable
 
 from pydantic import BaseModel, ConfigDict
 
-from core.providers.base import ToolDef
+from providers.base import ToolDef
 
 __all__ = ["DuplicateToolError", "Tool", "ToolRegistry", "ToolResult"]
 

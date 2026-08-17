@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from shared.paths import (
+from paths import (
     data_dir,
     db_path,
     default_config_path,

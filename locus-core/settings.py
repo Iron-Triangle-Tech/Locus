@@ -17,7 +17,7 @@ from pydantic_settings import (
 )
 from pydantic_settings.sources import TomlConfigSettingsSource
 
-from shared.paths import db_path, ensure_data_dir, workspace_path
+from paths import db_path, ensure_data_dir, workspace_path
 
 HERE = Path(__file__).resolve().parent
 DEFAULT_CONFIG_PATH = HERE / "config.toml"

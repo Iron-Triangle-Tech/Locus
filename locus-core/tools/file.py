@@ -31,7 +31,7 @@ from pathlib import Path
 
 import anyio
 
-from core.tools.registry import Tool, ToolResult
+from tools.registry import Tool, ToolResult
 
 __all__ = ["FileList", "FileRead", "FileWrite", "default_file_tools"]
 

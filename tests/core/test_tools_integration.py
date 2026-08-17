@@ -20,14 +20,14 @@ from pathlib import Path
 
 import pytest
 
-from core.providers.base import ToolDef
-from core.settings import CoreSettings, StorageSettings, ToolsSettings
-from core.storage import session as session_mod
-from core.storage.database_io import Base, MemoryStore
-from core.tools.file import default_file_tools
-from core.tools.http import HttpFetch
-from core.tools.loader import load_tool_defs, seed_missing
-from core.tools.registry import ToolRegistry
+from providers.base import ToolDef
+from settings import CoreSettings, StorageSettings, ToolsSettings
+from storage import session as session_mod
+from storage.database_io import Base, MemoryStore
+from tools.file import default_file_tools
+from tools.http import HttpFetch
+from tools.loader import load_tool_defs, seed_missing
+from tools.registry import ToolRegistry
 
 
 @pytest.fixture

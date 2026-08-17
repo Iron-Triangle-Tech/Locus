@@ -25,7 +25,7 @@ from __future__ import annotations
 
 import httpx
 
-from core.tools.registry import Tool, ToolResult
+from tools.registry import Tool, ToolResult
 
 __all__ = ["HttpFetch"]
 

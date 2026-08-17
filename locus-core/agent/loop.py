@@ -42,19 +42,7 @@ import logging
 import uuid
 from typing import Protocol, runtime_checkable
 
-from core.providers import get_provider
-from core.providers.base import (
-    AssistantTurn,
-    Provider,
-    ToolCall,
-    ToolDef,
-    ToolResultMessage,
-    UserTurn,
-)
-from core.settings import CoreSettings
-from core.storage.database_io import MemoryStore
-from core.tools.registry import ToolRegistry
-from shared.protocol import (
+from protocol import (
     ErrorEvent,
     FinalEvent,
     ThinkingEvent,
@@ -62,6 +50,18 @@ from shared.protocol import (
     ToolCallEvent,
     ToolResultEvent,
 )
+from providers import get_provider
+from providers.base import (
+    AssistantTurn,
+    Provider,
+    ToolCall,
+    ToolDef,
+    ToolResultMessage,
+    UserTurn,
+)
+from settings import CoreSettings
+from storage.database_io import MemoryStore
+from tools.registry import ToolRegistry
 
 __all__ = ["AdhocDispatcher", "AgentLoop", "LoopConfig", "NoAdhocDispatcher"]
 

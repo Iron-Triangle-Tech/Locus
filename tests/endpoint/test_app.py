@@ -26,7 +26,7 @@ from typing import Any
 
 from endpoint.settings import CoreSettings, EndpointSettings, UISettings
 from endpoint.ui.app import LocusApp
-from shared.protocol import (
+from protocol import (
     ErrorEvent,
     FinalEvent,
     ThinkingEvent,

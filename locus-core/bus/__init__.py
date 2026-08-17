@@ -5,7 +5,7 @@ import contextlib
 import logging
 from collections.abc import AsyncIterator
 
-from shared.protocol import CoreFrame, ErrorEvent
+from protocol import CoreFrame, ErrorEvent
 
 __all__ = ["EventBus", "Subscription"]
 

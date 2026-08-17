@@ -33,7 +33,7 @@ from sqlalchemy import (
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
-from core.providers.base import AssistantTurn, ToolCall, ToolDef, ToolResultMessage
+from providers.base import AssistantTurn, ToolCall, ToolDef, ToolResultMessage
 
 __all__ = [
     "Base",

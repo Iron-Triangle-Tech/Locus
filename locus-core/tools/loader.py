@@ -16,10 +16,10 @@ import tomllib
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from core.providers.base import ToolDef
+from providers.base import ToolDef
 
 if TYPE_CHECKING:
-    from core.storage.database_io import MemoryStore
+    from storage.database_io import MemoryStore
 
 __all__ = ["DEFAULT_ROM_PATH", "load_tool_defs", "seed_missing"]
 

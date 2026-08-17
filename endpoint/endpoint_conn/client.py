@@ -39,7 +39,7 @@ import logging
 from collections.abc import AsyncIterator, Awaitable, Callable
 from typing import TYPE_CHECKING, Any
 
-from shared.protocol import (
+from protocol import (
     Connect,
     ErrorEvent,
     ToolCallEvent,
@@ -278,7 +278,7 @@ def _adhoc_defs(adhoc: dict[str, AdhocTool]) -> list:
     browser/sandbox tools are out of scope), so this returns ``[]`` unless a
     caller registers one with a ``schema`` attribute.
     """
-    from shared.protocol import AdhocTool, ToolSchema
+    from protocol import AdhocTool, ToolSchema
 
     defs: list[AdhocTool] = []
     for name, runnable in adhoc.items():

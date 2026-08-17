@@ -20,7 +20,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from core.settings import CoreSettings
+from settings import CoreSettings
 
 __all__ = [
     "AsyncSession",

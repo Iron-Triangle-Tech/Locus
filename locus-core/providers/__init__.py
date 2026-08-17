@@ -26,7 +26,7 @@ from .base import (
 )
 
 if TYPE_CHECKING:
-    from core.settings import CoreSettings
+    from settings import CoreSettings
 
 __all__ = [
     "AssistantTurn",

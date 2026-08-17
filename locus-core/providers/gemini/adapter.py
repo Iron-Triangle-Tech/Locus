@@ -21,7 +21,7 @@ import json
 from collections.abc import AsyncIterator
 from typing import TYPE_CHECKING, Any, Literal
 
-from .base import (
+from ..base import (
     AssistantTurn,
     ProviderResponse,
     ProviderStreamChunk,

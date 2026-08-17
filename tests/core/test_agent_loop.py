@@ -19,15 +19,15 @@ from pathlib import Path
 
 import pytest
 
-from core.agent.loop import AgentLoop, LoopConfig, NoAdhocDispatcher
-from core.bus import EventBus
-from core.providers.base import ProviderStreamChunk, ToolCall
-from core.settings import CoreSettings, StorageSettings, ToolsSettings
-from core.storage import session as session_mod
-from core.storage.database_io import Base, MemoryStore
-from core.tools.file import default_file_tools
-from core.tools.loader import load_tool_defs, seed_missing
-from core.tools.registry import ToolRegistry
+from agent.loop import AgentLoop, LoopConfig, NoAdhocDispatcher
+from bus import EventBus
+from providers.base import ProviderStreamChunk, ToolCall
+from settings import CoreSettings, StorageSettings, ToolsSettings
+from storage import session as session_mod
+from storage.database_io import Base, MemoryStore
+from tools.file import default_file_tools
+from tools.loader import load_tool_defs, seed_missing
+from tools.registry import ToolRegistry
 
 
 class FakeProvider:
@@ -122,7 +122,7 @@ class TestOneShotTurn:
         )
 
         # Monkeypatch get_provider to return our fake (avoids settings dance).
-        import core.agent.loop as loop_mod
+        import agent.loop as loop_mod
 
         orig_gp = loop_mod.get_provider
         loop_mod.get_provider = lambda name, settings: provider
@@ -171,7 +171,7 @@ class TestBuiltInToolTurn:
         loop = AgentLoop(
             settings=settings, store=store, registry=reg, bus=bus, config=LoopConfig(max_iters=4)
         )
-        import core.agent.loop as loop_mod
+        import agent.loop as loop_mod
 
         orig = loop_mod.get_provider
         loop_mod.get_provider = lambda name, settings: provider
@@ -223,7 +223,7 @@ class TestAdhocToolTurn:
             dispatcher=NoAdhocDispatcher(),
             config=LoopConfig(max_iters=4),
         )
-        import core.agent.loop as loop_mod
+        import agent.loop as loop_mod
 
         orig = loop_mod.get_provider
         loop_mod.get_provider = lambda name, settings: provider
@@ -274,7 +274,7 @@ class TestMaxIters:
         loop = AgentLoop(
             settings=settings, store=store, registry=reg, bus=bus, config=LoopConfig(max_iters=2)
         )
-        import core.agent.loop as loop_mod
+        import agent.loop as loop_mod
 
         orig = loop_mod.get_provider
         loop_mod.get_provider = lambda name, settings: provider
@@ -309,7 +309,7 @@ class TestThinkingStream:
         loop = AgentLoop(
             settings=settings, store=store, registry=reg, bus=bus, config=LoopConfig(max_iters=4)
         )
-        import core.agent.loop as loop_mod
+        import agent.loop as loop_mod
 
         orig = loop_mod.get_provider
         loop_mod.get_provider = lambda name, settings: provider

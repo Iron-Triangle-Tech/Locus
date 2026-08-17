@@ -51,8 +51,8 @@ import contextlib
 import logging
 from typing import TYPE_CHECKING
 
-from shared.auth import check_token
-from shared.protocol import (
+from auth import check_token
+from protocol import (
     Connect,
     Disconnect,
     ErrorEvent,
@@ -68,8 +68,8 @@ if TYPE_CHECKING:
 
     from fastapi import WebSocket
 
-    from core.bus import EventBus
-    from core.providers.base import ToolCall, ToolResultMessage
+    from bus import EventBus
+    from providers.base import ToolCall, ToolResultMessage
 
 __all__ = [
     "LinkRegistry",
@@ -206,7 +206,7 @@ class WSLinkAdhocDispatcher:
 
 def _to_message(result: ToolResult, *, name: str) -> ToolResultMessage:
     """Translate a wire :class:`ToolResult` into the loop-internal type."""
-    from core.providers.base import ToolResultMessage
+    from providers.base import ToolResultMessage
 
     return ToolResultMessage(
         call_id=result.call_id,
